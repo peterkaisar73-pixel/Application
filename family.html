@@ -56,7 +56,7 @@ let currentSubmission = null;
   if (!currentProfile) return;
   if (currentProfile.is_admin) { window.location.href = 'admin.html'; return; }
 
-  document.getElementById('welcomeMsg').textContent = 'أهلاً، ' + currentProfile.full_name;
+  document.getElementById('welcomeMsg').textContent = 'أهلاً، ' + currentProfile.name;
   await loadLectures();
 })();
 
