@@ -20,7 +20,7 @@ async function signUpFamily(email, password, fullName, phone) {
 
   const { error: profileError } = await sb.from("profiles").insert({
     id: userId,
-    full_name: fullName,
+    name: fullName,
     phone: phone,
     is_admin: false,
   });
