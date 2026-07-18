@@ -205,8 +205,8 @@ async function loadSubmissions() {
   }
 
   list.innerHTML = `<div class="lecture-grid">` + submissions.map(sub => {
-    const badgeClass = sub.status === 'graded' ? 'badge-graded' : 'badge-pending';
-    const badgeText = sub.status === 'graded' ? 'تم التقييم' : 'في انتظار المراجعة';
+    const badgeClass = sub.is_reviewed ? 'badge-graded' : 'badge-pending';
+    const badgeText = sub.is_reviewed ? 'تم التقييم' : 'في انتظار المراجعة';
     return `
       <div class="tablet lecture-card">
         <div class="lecture-title">${escapeHtml(sub.profiles?.name || 'أسرة')}</div>
@@ -249,12 +249,8 @@ async function openSubmission(subId) {
 
     <form id="gradeForm" style="margin-top:20px;">
       <div class="field">
-        <label>التقييم</label>
-        <input type="text" id="gradeInput" value="${sub.grade != null ? escapeHtml(String(sub.grade)) : ''}" placeholder="مثال: ممتاز، أو 9/10">
-      </div>
-      <div class="field">
-        <label>ملاحظات (اختياري)</label>
-        <textarea id="feedbackInput" placeholder="ملاحظات للأسرة">${sub.admin_feedback ? escapeHtml(sub.admin_feedback) : ''}</textarea>
+        <label>ملاحظات وتقييم الخادم</label>
+        <textarea id="feedbackInput" placeholder="مثال: ممتاز، أو أي ملاحظات للأسرة">${sub.admin_feedback ? escapeHtml(sub.admin_feedback) : ''}</textarea>
       </div>
       <button class="btn" type="submit" style="width:100%;" id="gradeSubmitBtn">حفظ التقييم</button>
     </form>
@@ -266,12 +262,11 @@ async function openSubmission(subId) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
 
-    const grade = document.getElementById('gradeInput').value.trim();
     const feedback = document.getElementById('feedbackInput').value.trim();
 
     const { error } = await sb
       .from('submissions')
-      .update({ grade, admin_feedback: feedback, status: 'graded' })
+      .update({ admin_feedback: feedback, is_reviewed: true })
       .eq('id', subId);
 
     if (error) {
