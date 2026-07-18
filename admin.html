@@ -192,7 +192,7 @@ async function loadSubmissions() {
 
   const { data: submissions, error } = await sb
     .from('submissions')
-    .select('*, lectures(title, week_number), profiles(full_name, phone)')
+    .select('*, lectures(title, week_number), profiles(name, phone)')
     .order('submitted_at', { ascending: false });
 
   if (error) {
@@ -209,7 +209,7 @@ async function loadSubmissions() {
     const badgeText = sub.status === 'graded' ? 'تم التقييم' : 'في انتظار المراجعة';
     return `
       <div class="tablet lecture-card">
-        <div class="lecture-title">${escapeHtml(sub.profiles?.full_name || 'أسرة')}</div>
+        <div class="lecture-title">${escapeHtml(sub.profiles?.name || 'أسرة')}</div>
         <div class="lecture-desc">
           المحاضرة: ${escapeHtml(sub.lectures?.title || '—')} (أسبوع ${sub.lectures?.week_number ?? '–'})<br>
           ${sub.profiles?.phone ? 'تليفون: ' + escapeHtml(sub.profiles.phone) : ''}
@@ -226,7 +226,7 @@ async function openSubmission(subId) {
 
   const { data: sub } = await sb
     .from('submissions')
-    .select('*, lectures(title), profiles(full_name)')
+    .select('*, lectures(title), profiles(name)')
     .eq('id', subId)
     .single();
 
@@ -237,7 +237,7 @@ async function openSubmission(subId) {
 
   answers.sort((a, b) => (a.homework_questions?.order_number || 0) - (b.homework_questions?.order_number || 0));
 
-  document.getElementById('subTitle').textContent = `${sub.profiles?.full_name || 'أسرة'} — ${sub.lectures?.title || ''}`;
+  document.getElementById('subTitle').textContent = `${sub.profiles?.name || 'أسرة'} — ${sub.lectures?.title || ''}`;
 
   document.getElementById('subBody').innerHTML = `
     ${answers.map((a, i) => `
