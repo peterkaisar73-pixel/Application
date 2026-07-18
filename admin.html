@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الأدمن - صخرة العهد</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#131f2c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="صخرة العهد">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 3 L42 15 L36 44 L12 44 L6 15 Z" fill="#1c2e40" stroke="#c9a54d" stroke-width="1.6"/>
+        <path d="M24 15 L24 33 M17 22 L31 22" stroke="#e3c980" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1 class="brand-title" style="font-size:20px;">صخرة العهد</h1>
+        <div class="brand-sub">لوحة تحكم الخادم</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-small" onclick="signOutUser()">تسجيل الخروج</button>
+  </div>
+
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" data-tab="upload">رفع محاضرة جديدة</div>
+    <div class="tab" data-tab="review">مراجعة التسليمات</div>
+  </div>
+
+  <!-- ============ رفع محاضرة ============ -->
+  <div id="uploadTab">
+    <div class="tablet" style="padding:26px; max-width:640px;">
+      <h2 style="font-size:18px; margin-top:0;">بيانات المحاضرة</h2>
+      <div id="uploadMsg"></div>
+      <form id="lectureForm">
+        <div class="field">
+          <label>عنوان المحاضرة</label>
+          <input type="text" id="lecTitle" required>
+        </div>
+        <div class="field">
+          <label>وصف مختصر</label>
+          <textarea id="lecDesc" placeholder="اختياري"></textarea>
+        </div>
+        <div class="field">
+          <label>رقم الأسبوع</label>
+          <input type="number" id="lecWeek" required min="1">
+        </div>
+        <div class="field">
+          <label>ملف المحاضرة (PDF)</label>
+          <input type="file" id="lecPdf" accept="application/pdf" required>
+        </div>
+
+        <hr class="divider">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 style="font-size:16px; margin:0;">أسئلة الواجب</h2>
+          <button type="button" class="btn btn-ghost btn-small" onclick="addQuestionField()">+ إضافة سؤال</button>
+        </div>
+        <div id="questionsWrap"></div>
+
+        <button class="btn" type="submit" style="width:100%; margin-top:20px;" id="lecSubmitBtn">نشر المحاضرة</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ مراجعة التسليمات ============ -->
+  <div id="reviewTab" class="hidden">
+    <div id="reviewList">جاري التحميل...</div>
+  </div>
+
+</div>
+
+<!-- نافذة مراجعة تسليم واحد -->
+<div id="subOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(6,10,15,0.75); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; z-index:50;">
+  <div class="tablet" id="subModal" style="max-width:640px; width:100%; padding:26px; margin-top:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 id="subTitle" style="font-size:18px; margin:0;">مراجعة التسليم</h2>
+      <button class="btn btn-ghost btn-small" onclick="closeSubModal()">إغلاق ✕</button>
+    </div>
+    <div id="subBody">جاري التحميل...</div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+<script>
+let questionCounter = 0;
+
+(async () => {
+  const profile = await requireAdmin();
+  if (!profile) return;
+  addQuestionField(); // نبدأ بسؤال واحد افتراضيًا
+})();
+
+// ==== تبديل التبويبات ====
+document.querySelectorAll('#mainTabs .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#mainTabs .tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.getElementById('uploadTab').classList.toggle('hidden', target !== 'upload');
+    document.getElementById('reviewTab').classList.toggle('hidden', target !== 'review');
+    if (target === 'review') loadSubmissions();
+  });
+});
+
+// ==== إضافة حقل سؤال ====
+function addQuestionField() {
+  questionCounter++;
+  const wrap = document.getElementById('questionsWrap');
+  const div = document.createElement('div');
+  div.className = 'field';
+  div.style.display = 'flex';
+  div.style.gap = '8px';
+  div.innerHTML = `
+    <input type="text" class="question-input" placeholder="نص السؤال" style="flex:1;">
+    <button type="button" class="btn btn-ghost btn-small" onclick="this.parentElement.remove()">حذف</button>
+  `;
+  wrap.appendChild(div);
+}
+
+// ==== رفع محاضرة جديدة ====
+document.getElementById('lectureForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('lecSubmitBtn');
+  const msgBox = document.getElementById('uploadMsg');
+  msgBox.innerHTML = '';
+
+  const title = document.getElementById('lecTitle').value.trim();
+  const description = document.getElementById('lecDesc').value.trim();
+  const week = parseInt(document.getElementById('lecWeek').value, 10);
+  const fileInput = document.getElementById('lecPdf');
+  const file = fileInput.files[0];
+
+  const questionInputs = [...document.querySelectorAll('.question-input')]
+    .map(i => i.value.trim())
+    .filter(v => v.length > 0);
+
+  if (!file) {
+    msgBox.innerHTML = `<div class="msg msg-error">برجاء اختيار ملف PDF</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> جاري الرفع...';
+
+  try {
+    // 1. رفع الملف للـ Storage
+    const filePath = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const { error: uploadError } = await sb.storage.from('lectures').upload(filePath, file);
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = sb.storage.from('lectures').getPublicUrl(filePath);
+    const pdfUrl = urlData.publicUrl;
+
+    // 2. إنشاء صف المحاضرة
+    const { data: newLecture, error: lecError } = await sb
+      .from('lectures')
+      .insert({ title, description, pdf_url: pdfUrl, week_number: week })
+      .select()
+      .single();
+    if (lecError) throw lecError;
+
+    // 3. إضافة الأسئلة
+    if (questionInputs.length > 0) {
+      const rows = questionInputs.map((q, i) => ({
+        lecture_id: newLecture.id,
+        question_text: q,
+        order_number: i + 1,
+      }));
+      const { error: qError } = await sb.from('homework_questions').insert(rows);
+      if (qError) throw qError;
+    }
+
+    msgBox.innerHTML = `<div class="msg msg-success">تم نشر المحاضرة بنجاح ✅</div>`;
+    document.getElementById('lectureForm').reset();
+    document.getElementById('questionsWrap').innerHTML = '';
+    addQuestionField();
+
+  } catch (err) {
+    msgBox.innerHTML = `<div class="msg msg-error">حصل خطأ: ${err.message || err}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'نشر المحاضرة';
+  }
+});
+
+// ==== تحميل قائمة التسليمات ====
+async function loadSubmissions() {
+  const list = document.getElementById('reviewList');
+  list.innerHTML = 'جاري التحميل...';
+
+  const { data: submissions, error } = await sb
+    .from('submissions')
+    .select('*, lectures(title, week_number), profiles(name, phone)')
+    .order('submitted_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = `<div class="empty-state">حصل خطأ في تحميل التسليمات: ${error.message}</div>`;
+    return;
+  }
+  if (!submissions || submissions.length === 0) {
+    list.innerHTML = `<div class="empty-state">لسه مفيش تسليمات</div>`;
+    return;
+  }
+
+  list.innerHTML = `<div class="lecture-grid">` + submissions.map(sub => {
+    const badgeClass = sub.is_reviewed ? 'badge-graded' : 'badge-pending';
+    const badgeText = sub.is_reviewed ? 'تم التقييم' : 'في انتظار المراجعة';
+    return `
+      <div class="tablet lecture-card">
+        <div class="lecture-title">${escapeHtml(sub.profiles?.name || 'أسرة')}</div>
+        <div class="lecture-desc">
+          المحاضرة: ${escapeHtml(sub.lectures?.title || '—')} (أسبوع ${sub.lectures?.week_number ?? '–'})<br>
+          ${sub.profiles?.phone ? 'تليفون: ' + escapeHtml(sub.profiles.phone) : ''}
+        </div>
+        <div style="margin-bottom:12px;"><span class="badge ${badgeClass}">${badgeText}</span></div>
+        <button class="btn btn-small" onclick="openSubmission('${sub.id}')">مراجعة الإجابات</button>
+      </div>`;
+  }).join('') + `</div>`;
+}
+
+async function openSubmission(subId) {
+  document.getElementById('subOverlay').classList.remove('hidden');
+  document.getElementById('subBody').innerHTML = 'جاري التحميل...';
+
+  const { data: sub } = await sb
+    .from('submissions')
+    .select('*, lectures(title), profiles(name)')
+    .eq('id', subId)
+    .single();
+
+  const { data: answers } = await sb
+    .from('answers')
+    .select('*, homework_questions(question_text, order_number)')
+    .eq('submission_id', subId);
+
+  answers.sort((a, b) => (a.homework_questions?.order_number || 0) - (b.homework_questions?.order_number || 0));
+
+  document.getElementById('subTitle').textContent = `${sub.profiles?.name || 'أسرة'} — ${sub.lectures?.title || ''}`;
+
+  document.getElementById('subBody').innerHTML = `
+    ${answers.map((a, i) => `
+      <div class="question-block">
+        <div><span class="question-num">${i + 1}.</span>${escapeHtml(a.homework_questions?.question_text || '')}</div>
+        <div class="answer-view">${escapeHtml(a.answer_text)}</div>
+      </div>
+    `).join('')}
+
+    <form id="gradeForm" style="margin-top:20px;">
+      <div class="field">
+        <label>ملاحظات وتقييم الخادم</label>
+        <textarea id="feedbackInput" placeholder="مثال: ممتاز، أو أي ملاحظات للأسرة">${sub.admin_feedback ? escapeHtml(sub.admin_feedback) : ''}</textarea>
+      </div>
+      <button class="btn" type="submit" style="width:100%;" id="gradeSubmitBtn">حفظ التقييم</button>
+    </form>
+  `;
+
+  document.getElementById('gradeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('gradeSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const feedback = document.getElementById('feedbackInput').value.trim();
+
+    const { error } = await sb
+      .from('submissions')
+      .update({ admin_feedback: feedback, is_reviewed: true })
+      .eq('id', subId);
+
+    if (error) {
+      alert('حصل خطأ: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = 'حفظ التقييم';
+      return;
+    }
+
+    closeSubModal();
+    await loadSubmissions();
+  });
+}
+
+function closeSubModal() {
+  document.getElementById('subOverlay').classList.add('hidden');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
