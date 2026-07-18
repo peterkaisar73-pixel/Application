@@ -80,12 +80,12 @@ async function loadLectures() {
   const { data: submissions } = await sb
     .from('submissions')
     .select('*')
-    .eq('family_id', currentProfile.id);
+    .eq('user_id', currentProfile.id);
 
   grid.innerHTML = lectures.map(lec => {
     const sub = submissions?.find(s => s.lecture_id === lec.id);
     let badge = '<span class="badge badge-none">لسه ما اتحلش</span>';
-    if (sub && sub.status === 'graded') badge = '<span class="badge badge-graded">تم التقييم</span>';
+    if (sub && sub.is_reviewed) badge = '<span class="badge badge-graded">تم التقييم</span>';
     else if (sub) badge = '<span class="badge badge-pending">تم التسليم</span>';
 
     return `
@@ -122,7 +122,7 @@ async function openHomework(lectureId) {
     .from('submissions')
     .select('*')
     .eq('lecture_id', lectureId)
-    .eq('family_id', currentProfile.id)
+    .eq('user_id', currentProfile.id)
     .maybeSingle();
   currentSubmission = submission;
 
@@ -141,8 +141,8 @@ async function openHomework(lectureId) {
   }
 
   if (submission) {
-    const badgeClass = submission.status === 'graded' ? 'badge-graded' : 'badge-pending';
-    const badgeText = submission.status === 'graded' ? 'تم التقييم' : 'في انتظار المراجعة';
+    const badgeClass = submission.is_reviewed ? 'badge-graded' : 'badge-pending';
+    const badgeText = submission.is_reviewed ? 'تم التقييم' : 'في انتظار المراجعة';
     document.getElementById('hwStatusBadge').innerHTML = `<span class="badge ${badgeClass}">${badgeText}</span>`;
   }
 
@@ -162,10 +162,10 @@ async function openHomework(lectureId) {
           </div>`;
       }).join('')}
 
-      ${submission && submission.status === 'graded' ? `
+      ${submission && submission.is_reviewed ? `
         <div class="feedback-box">
-          <strong style="color:var(--gold-soft);">تقييم الخادم:</strong> ${escapeHtml(submission.grade != null ? String(submission.grade) : '—')}
-          ${submission.admin_feedback ? `<br>${escapeHtml(submission.admin_feedback)}` : ''}
+          <strong style="color:var(--gold-soft);">ملاحظات الخادم:</strong>
+          ${submission.admin_feedback ? escapeHtml(submission.admin_feedback) : 'لا يوجد ملاحظات'}
         </div>
       ` : ''}
 
@@ -173,7 +173,7 @@ async function openHomework(lectureId) {
         <button class="btn" type="submit" style="width:100%; margin-top:18px;" id="hwSubmitBtn">تسليم الواجب</button>
       ` : `
         <div style="text-align:center; color:var(--cream-dim); font-size:13px; margin-top:16px;">
-          ${submission.status === 'graded' ? 'تم تقييم إجاباتك بالفعل' : 'تم تسليم إجاباتك وفي انتظار المراجعة'}
+          ${submission.is_reviewed ? 'تم تقييم إجاباتك بالفعل' : 'تم تسليم إجاباتك وفي انتظار المراجعة'}
         </div>
       `}
     </form>
@@ -209,8 +209,8 @@ async function submitHomework(e) {
     .from('submissions')
     .insert({
       lecture_id: currentLecture.id,
-      family_id: currentProfile.id,
-      status: 'submitted',
+      user_id: currentProfile.id,
+      is_reviewed: false,
       submitted_at: new Date().toISOString(),
     })
     .select()
