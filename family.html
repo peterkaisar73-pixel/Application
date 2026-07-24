@@ -1,284 +1,125 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>محاضراتي - صخرة العهد</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-180.png">
-<meta name="theme-color" content="#131f2c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="صخرة العهد">
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الأسرة - صخرة العهد</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="theme-color" content="#F3EEE1">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<div class="page-wrap">
-  <div class="topbar">
-    <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M24 3 L42 15 L36 44 L12 44 L6 15 Z" fill="#1c2e40" stroke="#c9a54d" stroke-width="1.6"/>
-        <path d="M24 15 L24 33 M17 22 L31 22" stroke="#e3c980" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <div>
-        <h1 class="brand-title" style="font-size:20px;">صخرة العهد</h1>
-        <div class="brand-sub" id="welcomeMsg">أهلاً بيك</div>
+  <div class="wrap">
+
+    <div class="header">
+      <!-- لوجوهات الكنيسة وإبني بيتك -->
+      <div class="logos-container">
+        <img src="church-logo.jpeg" alt="الكنيسة الرسولية إمبابة" class="brand-logo">
+        <img src="build your house.jpeg" alt="إبني بيتك" class="brand-logo">
+      </div>
+
+      <div class="eyebrow">مرحبًا بكم في منصة</div>
+      <h1>صخرة العهد</h1>
+      <p class="sub" id="welcomeMsg">جاري التحميل...</p>
+      <div class="divider">
+        <span></span><div class="line"></div>
+        <span></span><div class="line"></div>
+        <span></span>
       </div>
     </div>
-    <button class="btn btn-ghost btn-small hidden" id="installBtn" onclick="installApp()">تثبيت التطبيق 📲</button>
-    <button class="btn btn-ghost btn-small" onclick="signOutUser()">تسجيل الخروج</button>
-  </div>
 
-  <h2 style="font-size:20px; margin-bottom:16px;">المحاضرات</h2>
-  <div id="lectureGrid" class="lecture-grid">
-    <div class="empty-state">جاري التحميل...</div>
-  </div>
-</div>
-
-<!-- ==== نافذة الواجب ==== -->
-<div id="hwOverlay" class="hidden" style="position:fixed; inset:0; background:rgba(6,10,15,0.75); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; z-index:50;">
-  <div class="tablet" id="hwModal" style="max-width:640px; width:100%; padding:26px; margin-top:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-      <h2 id="hwTitle" style="font-size:19px; margin:0;">الواجب</h2>
-      <button class="btn btn-ghost btn-small" onclick="closeHomework()">إغلاق ✕</button>
+    <!-- أزرار الإجراءات العليا -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="font-size: 20px; font-weight: 700; margin: 0; color: var(--ink);">المحاضرات والواجبات</h2>
+      <button onclick="logout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 16px; border-radius: 50px; font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;">تسجيل الخروج</button>
     </div>
-    <div id="hwStatusBadge" style="margin-bottom:16px;"></div>
-    <div id="hwBody">جاري التحميل...</div>
+
+    <div id="msgBox"></div>
+
+    <!-- قائمة المحاضرات بالتنسيق الأصلي -->
+    <div id="lecturesList">
+      <div style="text-align: center; color: var(--stone); padding: 30px;">جاري تحميل المحاضرات...</div>
+    </div>
+
+    <div class="footer-note">منصة رفع المحاضرات ومتابعة الواجبات · صخرة العهد</div>
+
   </div>
-</div>
 
-<script src="config.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
-  }
-</script>
-<script>
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBtn').classList.remove('hidden');
-});
+  <script src="config.js"></script>
 
-async function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById('installBtn').classList.add('hidden');
-}
+  <script>
+    let currentProfile = null;
 
-let currentProfile = null;
-let currentLecture = null;
-let currentQuestions = [];
-let currentSubmission = null;
+    async function init() {
+      currentProfile = await getCurrentProfile();
+      if (!currentProfile) {
+        window.location.href = 'index.html';
+        return;
+      }
 
-(async () => {
-  const session = await requireAuth();
-  if (!session) return;
-  currentProfile = await getCurrentProfile();
-  if (!currentProfile) return;
-  if (currentProfile.is_admin) { window.location.href = 'admin.html'; return; }
-
-  document.getElementById('welcomeMsg').textContent = 'أهلاً، ' + currentProfile.name;
-  await loadLectures();
-})();
-
-async function loadLectures() {
-  const grid = document.getElementById('lectureGrid');
-  const { data: lectures, error } = await sb
-    .from('lectures')
-    .select('*')
-    .order('week_number', { ascending: true });
-
-  if (error) {
-    grid.innerHTML = `<div class="empty-state">حصل خطأ في تحميل المحاضرات</div>`;
-    return;
-  }
-  if (!lectures || lectures.length === 0) {
-    grid.innerHTML = `<div class="empty-state">لسه مفيش محاضرات متاحة</div>`;
-    return;
-  }
-
-  // نجيب كل التسليمات الخاصة بالأسرة دي مرة واحدة
-  const { data: submissions } = await sb
-    .from('submissions')
-    .select('*')
-    .eq('user_id', currentProfile.id);
-
-  grid.innerHTML = lectures.map(lec => {
-    const sub = submissions?.find(s => s.lecture_id === lec.id);
-    let badge = '<span class="badge badge-none">لسه ما اتحلش</span>';
-    if (sub && sub.is_reviewed) badge = '<span class="badge badge-graded">تم التقييم</span>';
-    else if (sub) badge = '<span class="badge badge-pending">تم التسليم</span>';
-
-    return `
-      <div class="tablet lecture-card">
-        <div class="week-num">${lec.week_number ?? '–'}</div>
-        <div class="lecture-title">${escapeHtml(lec.title)}</div>
-        <div class="lecture-desc">${escapeHtml(lec.description || '')}</div>
-        <div style="margin-bottom:12px;">${badge}</div>
-        <div class="card-actions">
-          ${lec.pdf_url ? `<a class="btn btn-ghost btn-small" href="${lec.pdf_url}" target="_blank">تحميل المحاضرة PDF</a>` : ''}
-          <button class="btn btn-small" onclick="openHomework('${lec.id}')">حل الواجب</button>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-async function openHomework(lectureId) {
-  document.getElementById('hwOverlay').classList.remove('hidden');
-  document.getElementById('hwBody').innerHTML = 'جاري التحميل...';
-  document.getElementById('hwStatusBadge').innerHTML = '';
-
-  const { data: lecture } = await sb.from('lectures').select('*').eq('id', lectureId).single();
-  currentLecture = lecture;
-  document.getElementById('hwTitle').textContent = 'واجب: ' + lecture.title;
-
-  const { data: questions } = await sb
-    .from('homework_questions')
-    .select('*')
-    .eq('lecture_id', lectureId)
-    .order('order_number', { ascending: true });
-  currentQuestions = questions || [];
-
-  const { data: submission } = await sb
-    .from('submissions')
-    .select('*')
-    .eq('lecture_id', lectureId)
-    .eq('user_id', currentProfile.id)
-    .maybeSingle();
-  currentSubmission = submission;
-
-  let existingAnswers = [];
-  if (submission) {
-    const { data: answers } = await sb
-      .from('answers')
-      .select('*')
-      .eq('submission_id', submission.id);
-    existingAnswers = answers || [];
-  }
-
-  if (currentQuestions.length === 0) {
-    document.getElementById('hwBody').innerHTML = `<div class="empty-state">لسه مفيش أسئلة لهذا الواجب</div>`;
-    return;
-  }
-
-  if (submission) {
-    const badgeClass = submission.is_reviewed ? 'badge-graded' : 'badge-pending';
-    const badgeText = submission.is_reviewed ? 'تم التقييم' : 'في انتظار المراجعة';
-    document.getElementById('hwStatusBadge').innerHTML = `<span class="badge ${badgeClass}">${badgeText}</span>`;
-  }
-
-  const readOnly = !!submission; // لو اتسلم قبل كده، نعرضه للقراءة بس
-  document.getElementById('hwBody').innerHTML = `
-    <form id="hwForm">
-      ${currentQuestions.map((q, i) => {
-        const ans = existingAnswers.find(a => a.question_id === q.id);
-        return `
-          <div class="question-block">
-            <div><span class="question-num">${i + 1}.</span>${escapeHtml(q.question_text)}</div>
-            ${readOnly
-              ? `<div class="answer-view">${ans ? escapeHtml(ans.answer_text) : '<i>بدون إجابة</i>'}</div>`
-              : `<div class="field" style="margin-top:8px;">
-                   <textarea name="q_${q.id}" placeholder="اكتب إجابتك هنا..."></textarea>
-                 </div>`}
-          </div>`;
-      }).join('')}
-
-      ${submission && submission.is_reviewed ? `
-        <div class="feedback-box">
-          <strong style="color:var(--gold-soft);">ملاحظات الخادم:</strong>
-          ${submission.admin_feedback ? escapeHtml(submission.admin_feedback) : 'لا يوجد ملاحظات'}
-        </div>
-      ` : ''}
-
-      ${!readOnly ? `
-        <button class="btn" type="submit" style="width:100%; margin-top:18px;" id="hwSubmitBtn">تسليم الواجب</button>
-      ` : `
-        <div style="text-align:center; color:var(--cream-dim); font-size:13px; margin-top:16px;">
-          ${submission.is_reviewed ? 'تم تقييم إجاباتك بالفعل' : 'تم تسليم إجاباتك وفي انتظار المراجعة'}
-        </div>
-      `}
-    </form>
-  `;
-
-  if (!readOnly) {
-    document.getElementById('hwForm').addEventListener('submit', submitHomework);
-  }
-}
-
-async function submitHomework(e) {
-  e.preventDefault();
-  const btn = document.getElementById('hwSubmitBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
-
-  // نتأكد إن كل الأسئلة ليها إجابة
-  const formData = new FormData(e.target);
-  const answersMap = {};
-  for (const q of currentQuestions) {
-    const val = (formData.get('q_' + q.id) || '').toString().trim();
-    if (!val) {
-      alert('برجاء الإجابة على كل الأسئلة قبل التسليم');
-      btn.disabled = false;
-      btn.textContent = 'تسليم الواجب';
-      return;
+      document.getElementById('welcomeMsg').textContent = `أسرة: ${currentProfile.name || 'مرحبًا بك'}`;
+      loadLectures();
     }
-    answersMap[q.id] = val;
-  }
 
-  // ننشئ صف submission
-  const { data: newSub, error: subError } = await sb
-    .from('submissions')
-    .insert({
-      lecture_id: currentLecture.id,
-      user_id: currentProfile.id,
-      is_reviewed: false,
-      submitted_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+    async function loadLectures() {
+      const container = document.getElementById('lecturesList');
+      
+      const { data: lectures, error } = await supabase
+        .from('lectures')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  if (subError) {
-    alert('حصل خطأ أثناء التسليم: ' + subError.message);
-    btn.disabled = false;
-    btn.textContent = 'تسليم الواجب';
-    return;
-  }
+      if (error) {
+        container.innerHTML = '<div class="msg msg-error">حدث خطأ أثناء تحميل المحاضرات</div>';
+        return;
+      }
 
-  // ندخل كل الإجابات
-  const answerRows = Object.entries(answersMap).map(([question_id, answer_text]) => ({
-    submission_id: newSub.id,
-    question_id,
-    answer_text,
-  }));
+      if (!lectures || lectures.length === 0) {
+        container.innerHTML = '<div class="auth-card" style="text-align: center; color: var(--ink-soft);">لا توجد محاضرات متاحة حاليًا.</div>';
+        return;
+      }
 
-  const { error: ansError } = await sb.from('answers').insert(answerRows);
+      // عرض المحاضرات بالتنسيق الأصلي المنظم
+      container.innerHTML = lectures.map(lecture => `
+        <div class="lecture-card">
+          <div class="lecture-header">
+            <h3 class="lecture-title">${lecture.title}</h3>
+            <span class="lecture-date">${new Date(lecture.created_at).toLocaleDateString('ar-EG')}</span>
+          </div>
+          ${lecture.description ? `<p class="lecture-desc">${lecture.description}</p>` : ''}
+          
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+            ${lecture.file_url ? `
+              <a href="${lecture.file_url}" target="_blank" style="text-decoration: none; flex: 1;">
+                <button class="submit-btn" style="background: var(--deep); padding: 8px 15px; font-size: 13px;">📥 تحميل المحاضرة</button>
+              </a>
+            ` : ''}
+            
+            ${lecture.assignment_url ? `
+              <a href="${lecture.assignment_url}" target="_blank" style="text-decoration: none; flex: 1;">
+                <button class="submit-btn" style="background: var(--gold); color: #fff; padding: 8px 15px; font-size: 13px;">📝 رابط الواجب</button>
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
 
-  if (ansError) {
-    alert('تم التسليم لكن حصل خطأ في حفظ الإجابات: ' + ansError.message);
-  }
+    async function logout() {
+      await signOut();
+      window.location.href = 'index.html';
+    }
 
-  closeHomework();
-  await loadLectures();
-}
-
-function closeHomework() {
-  document.getElementById('hwOverlay').classList.add('hidden');
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str ?? '';
-  return div.innerHTML;
-}
-</script>
+    init();
+  </script>
 </body>
 </html>
