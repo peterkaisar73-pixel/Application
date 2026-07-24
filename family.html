@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة الأسرة - صخرة العهد</title>
+  <title>صخرة العهد - المحاضرات والواجبات</title>
   
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
@@ -14,7 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 
-  <!-- مكتبة Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -22,15 +21,15 @@
   <div class="wrap">
 
     <div class="header">
-      <!-- شعارات الكنيسة وإبني بيتك -->
+      <!-- اللوجوهات المضافة بأبعاد متناسقة -->
       <div class="logos-container">
         <img src="church-logo.jpeg" alt="الكنيسة الرسولية إمبابة" class="brand-logo">
         <img src="build your house.jpeg" alt="إبني بيتك" class="brand-logo">
       </div>
 
-      <div class="eyebrow">مرحبًا بكم في منصة</div>
+      <div class="eyebrow">مرحباً بكم في منصة</div>
       <h1>صخرة العهد</h1>
-      <p class="sub" id="welcomeMsg">أسرة: بيتر ومريم</p>
+      <p class="sub" id="welcomeSub">جاري التحميل...</p>
       <div class="divider">
         <span></span><div class="line"></div>
         <span></span><div class="line"></div>
@@ -38,100 +37,103 @@
       </div>
     </div>
 
-    <!-- زر تسجيل الخروج والعنوان -->
+    <!-- Top Bar / User Info -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h2 style="font-size: 20px; font-weight: 700; margin: 0; color: var(--ink);">المحاضرات والواجبات</h2>
-      <button onclick="handleLogout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 6px 16px; border-radius: 50px; font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;">تسجيل الخروج</button>
+      <h2 style="font-size: 18px; margin: 0; color: var(--ink);">المحاضرات والواجبات</h2>
+      <button onclick="doLogout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;">تسجيل الخروج</button>
     </div>
 
     <div id="msgBox"></div>
 
-    <!-- قائمة المحاضرات -->
-    <div id="lecturesList">
-      <div style="text-align: center; color: var(--ink-soft); padding: 30px;">جاري تحميل المحاضرات...</div>
+    <!-- Lectures List -->
+    <div id="lecturesContainer">
+      <div style="text-align: center; color: var(--stone); padding: 20px;">جاري تحميل المحاضرات...</div>
     </div>
 
-    <div class="footer-note">منصة رفع المحاضرات ومتابعة الواجبات · صخرة العهد</div>
+    <div class="footer-note">
+      منصة رفع المحاضرات ومتابعة الواجبات · صخرة العهد
+    </div>
 
   </div>
 
   <script src="config.js"></script>
 
   <script>
-    async function loadFamilyData() {
-      const container = document.getElementById('lecturesList');
+    let currentFamily = null;
 
-      try {
-        // التأكد من تسجيل الدخول
-        let profile = null;
-        if (typeof getCurrentProfile === 'function') {
-          profile = await getCurrentProfile();
-        }
+    async function initFamily() {
+      // التأكد من تسجيل الدخول
+      currentFamily = await getCurrentProfile();
+      
+      if (!currentFamily) {
+        window.location.href = 'index.html';
+        return;
+      }
 
-        if (profile && profile.name) {
-          document.getElementById('welcomeMsg').textContent = `أسرة: ${profile.name}`;
-        }
+      // إذا كان أدمن تحويله لصفحة الأدمن
+      if (currentFamily.is_admin) {
+        window.location.href = 'admin.html';
+        return;
+      }
 
-        // جلب المحاضرات من قاعدة البيانات
-        const client = typeof _supabase !== 'undefined' ? _supabase : (typeof supabase !== 'undefined' ? supabase : null);
-        
-        if (!client) {
-          throw new Error("لم يتم العثور على الاتصال بقاعدة البيانات");
-        }
+      document.getElementById('welcomeSub').textContent = `أسرة: ${currentFamily.name || 'مرحباً بك'}`;
 
-        const { data: lectures, error } = await client
-          .from('lectures')
-          .select('*')
-          .order('created_at', { ascending: false });
+      fetchLectures();
+    }
 
-        if (error) throw error;
+    async function fetchLectures() {
+      const container = document.getElementById('lecturesContainer');
+      
+      const { data: lectures, error } = await _supabase
+        .from('lectures')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (!lectures || lectures.length === 0) {
-          container.innerHTML = '<div class="auth-card" style="text-align: center; color: var(--ink-soft);">لا توجد محاضرات متاحة حاليًا.</div>';
-          return;
-        }
+      if (error) {
+        console.error(error);
+        container.innerHTML = '<div class="msg msg-error">حدث خطأ أثناء تحميل المحاضرات</div>';
+        return;
+      }
 
-        // عرض المحاضرات بتصميم الكروت المخصص
-        container.innerHTML = lectures.map(lecture => `
-          <div class="auth-card" style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed var(--stone-line); padding-bottom: 8px;">
-              <h3 style="margin: 0; font-size: 18px; color: var(--ink); font-weight: 700;">${lecture.title || lecture.name || 'محاضرة بدون عنوان'}</h3>
-              <span style="font-size: 12px; color: var(--ink-soft);">${lecture.created_at ? new Date(lecture.created_at).toLocaleDateString('ar-EG') : ''}</span>
+      if (!lectures || lectures.length === 0) {
+        container.innerHTML = '<div class="auth-card" style="text-align: center; color: var(--stone);">لا توجد محاضرات مضافة بعد.</div>';
+        return;
+      }
+
+      container.innerHTML = lectures.map(lec => {
+        return `
+          <div class="lecture-card">
+            <div class="lecture-header">
+              <h3 class="lecture-title">${lec.title}</h3>
+              <span class="lecture-date">${new Date(lec.created_at).toLocaleDateString('ar-EG')}</span>
             </div>
+            ${lec.description ? `<p class="lecture-desc">${lec.description}</p>` : ''}
             
-            ${lecture.description ? `<p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 15px; line-height: 1.6;">${lecture.description}</p>` : ''}
-
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              ${(lecture.file_url || lecture.pdf_url) ? `
-                <a href="${lecture.file_url || lecture.pdf_url}" target="_blank" style="text-decoration: none; flex: 1; min-width: 140px;">
-                  <button class="submit-btn" style="background: var(--deep); padding: 9px 12px; font-size: 13px; margin: 0;">📥 تحميل المحاضرة</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+              ${lec.file_url ? `
+                <a href="${lec.file_url}" target="_blank" style="text-decoration: none; flex: 1;">
+                  <button class="submit-btn" style="background: var(--deep); padding: 8px 15px; font-size: 13px; margin: 0;">📥 تحميل المحاضرة</button>
                 </a>
               ` : ''}
-
-              ${(lecture.assignment_url || lecture.quiz_url) ? `
-                <a href="${lecture.assignment_url || lecture.quiz_url}" target="_blank" style="text-decoration: none; flex: 1; min-width: 140px;">
-                  <button class="submit-btn" style="background: var(--accent); padding: 9px 12px; font-size: 13px; margin: 0;">📝 رابط الواجب</button>
+              
+              ${lec.assignment_url ? `
+                <a href="${lec.assignment_url}" target="_blank" style="text-decoration: none; flex: 1;">
+                  <button class="submit-btn" style="background: var(--accent); padding: 8px 15px; font-size: 13px; margin: 0;">📝 رابط الواجب</button>
                 </a>
               ` : ''}
             </div>
           </div>
-        `).join('');
-
-      } catch (err) {
-        console.error("Error loading lectures:", err);
-        container.innerHTML = '<div class="msg msg-error">تعذر تحميل المحاضرات، يرجى المحاولة لاحقًا.</div>';
-      }
+        `;
+      }).join('');
     }
 
-    async function handleLogout() {
-      if (typeof signOut === 'function') {
-        await signOut();
-      }
+    async function doLogout() {
+      await signOut();
       window.location.href = 'index.html';
     }
 
-    // بدء التحميل عند فتح الصفحة
-    document.addEventListener('DOMContentLoaded', loadFamilyData);
+    // تشغيل الصفحة
+    initFamily();
   </script>
 </body>
 </html>
