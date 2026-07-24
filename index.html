@@ -21,6 +21,12 @@
   <div class="wrap">
 
     <div class="header">
+      <!-- شعارات الخدمة والكنيسة -->
+      <div class="logos-container">
+        <img src="church-logo.jpeg" alt="الكنيسة الرسولية إمبابة" class="brand-logo">
+        <img src="build your house.jpeg" alt="إبني بيتك" class="brand-logo">
+      </div>
+
       <div class="eyebrow">منصة المحاضرات</div>
       <h1>صخرة العهد</h1>
       <p class="sub">فَنَزَلَ الْمَطَرُ... وَلَمْ يَسْقُطْ، لأَنَّهُ كَانَ مُؤَسَّسًا عَلَى الصَّخْرِ</p>
@@ -121,7 +127,7 @@
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> جاري الدخول...';
+      btn.textContent = 'جاري الدخول...';
 
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -143,7 +149,7 @@
       e.preventDefault();
       const btn = document.getElementById('signupBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> جاري التسجيل...';
+      btn.textContent = 'جاري التسجيل...';
 
       const name = document.getElementById('suName').value.trim();
       const phone = document.getElementById('suPhone').value.trim();
