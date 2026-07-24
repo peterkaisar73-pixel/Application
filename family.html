@@ -21,6 +21,7 @@
   <div class="wrap">
 
     <div class="header">
+      <!-- اللوجوهات المضافة فقط -->
       <div class="logos-container">
         <img src="church-logo.jpeg" alt="الكنيسة الرسولية إمبابة" class="brand-logo">
         <img src="build your house.jpeg" alt="إبني بيتك" class="brand-logo">
@@ -28,7 +29,7 @@
 
       <div class="eyebrow">مرحباً بكم في منصة</div>
       <h1>صخرة العهد</h1>
-      <p class="sub" id="welcomeSub">أسرة: بيتر ومريم</p>
+      <p class="sub" id="welcomeSub">جاري التحميل...</p>
       <div class="divider">
         <span></span><div class="line"></div>
         <span></span><div class="line"></div>
@@ -36,11 +37,13 @@
       </div>
     </div>
 
-    <!-- Top Bar -->
+    <!-- Top Bar / User Info -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h2 style="font-size: 18px; margin: 0; color: var(--ink);">المحاضرات والواجبات</h2>
-      <button onclick="doLogout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 5px 14px; border-radius: 20px; font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;">تسجيل الخروج</button>
+      <button onclick="doLogout()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 5px 12px; border-radius: 20px; font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;">تسجيل الخروج</button>
     </div>
+
+    <div id="msgBox"></div>
 
     <!-- Lectures List -->
     <div id="lecturesContainer">
@@ -56,16 +59,22 @@
   <script src="config.js"></script>
 
   <script>
+    let currentFamily = null;
+
     async function initFamily() {
-      try {
-        // 1. تجربة جلب الحساب
-        if (typeof getCurrentProfile === 'function') {
-          const prof = await getCurrentProfile();
-          if (prof && prof.name) {
-            document.getElementById('welcomeSub').textContent = `أسرة: ${prof.name}`;
-          }
-        }
-      } catch(e) { console.log(e); }
+      currentFamily = await getCurrentProfile();
+      
+      if (!currentFamily) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      if (currentFamily.is_admin) {
+        window.location.href = 'admin.html';
+        return;
+      }
+
+      document.getElementById('welcomeSub').textContent = `أسرة: ${currentFamily.name || 'مرحباً بك'}`;
 
       fetchLectures();
     }
@@ -73,27 +82,28 @@
     async function fetchLectures() {
       const container = document.getElementById('lecturesContainer');
       
-      try {
-        // تحديد العميل بدون أخطاء
-        const client = (typeof _supabase !== 'undefined') ? _supabase : supabase;
+      const { data: lectures, error } = await _supabase
+        .from('lectures')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        const { data: lectures, error } = await client
-          .from('lectures')
-          .select('*')
-          .order('created_at', { ascending: false });
+      if (error) {
+        console.error(error);
+        container.innerHTML = '<div class="msg msg-error">حدث خطأ أثناء تحميل المحاضرات</div>';
+        return;
+      }
 
-        if (error) throw error;
+      if (!lectures || lectures.length === 0) {
+        container.innerHTML = '<div class="auth-card" style="text-align: center; color: var(--stone);">لا توجد محاضرات مضافة بعد.</div>';
+        return;
+      }
 
-        if (!lectures || lectures.length === 0) {
-          container.innerHTML = '<div class="lecture-card" style="text-align: center; color: var(--stone);">لا توجد محاضرات مضافة بعد.</div>';
-          return;
-        }
-
-        container.innerHTML = lectures.map(lec => `
+      container.innerHTML = lectures.map(lec => {
+        return `
           <div class="lecture-card">
             <div class="lecture-header">
-              <h3 class="lecture-title">${lec.title || lec.name || 'محاضرة'}</h3>
-              <span class="lecture-date">${lec.created_at ? new Date(lec.created_at).toLocaleDateString('ar-EG') : ''}</span>
+              <h3 class="lecture-title">${lec.title}</h3>
+              <span class="lecture-date">${new Date(lec.created_at).toLocaleDateString('ar-EG')}</span>
             </div>
             ${lec.description ? `<p class="lecture-desc">${lec.description}</p>` : ''}
             
@@ -111,23 +121,16 @@
               ` : ''}
             </div>
           </div>
-        `).join('');
-
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div class="msg msg-error">حدث خطأ أثناء تحميل المحاضرات. برجاء إعادة المحاولة.</div>';
-      }
+        `;
+      }).join('');
     }
 
     async function doLogout() {
-      try {
-        if (typeof signOut === 'function') await signOut();
-        else if (typeof _supabase !== 'undefined') await _supabase.auth.signOut();
-      } catch(e) {}
+      await signOut();
       window.location.href = 'index.html';
     }
 
-    window.onload = initFamily;
+    initFamily();
   </script>
 </body>
 </html>
