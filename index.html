@@ -1,103 +1,168 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>صخرة العهد - منصة المحاضرات</title>
-  
-  <!-- PWA Links -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-180.png">
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- External CSS -->
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صخرة العهد</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#131f2c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="صخرة العهد">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <div class="header">
-    <div class="eyebrow">منصة الكورس</div>
-    <h1>صخرة العهد</h1>
-    <p class="sub">فَنَزَلَ الْمَطَرُ... وَلَمْ يَسْقُطْ، لأَنَّهُ كَانَ مُؤَسَّسًا عَلَى الصَّخْرِ</p>
-    <div class="divider">
-      <span></span><div class="line"></div>
-      <span></span><div class="line"></div>
-      <span></span>
+<div class="page-wrap" style="max-width:440px; padding-top:60px;">
+
+  <div class="brand" style="margin-bottom:28px;">
+    <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 3 L42 15 L36 44 L12 44 L6 15 Z" fill="#1c2e40" stroke="#c9a54d" stroke-width="1.6"/>
+      <path d="M24 3 L42 15 L36 44 L12 44 L6 15 Z" fill="none" stroke="#c9a54d" stroke-width="0.6" transform="scale(0.82) translate(5,5)"/>
+      <path d="M24 15 L24 33 M17 22 L31 22" stroke="#e3c980" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1 class="brand-title">صخرة العهد</h1>
+      <div class="brand-sub">فَنَزَلَ الْمَطَرُ... وَلَمْ يَسْقُطْ، لأَنَّهُ كَانَ مُؤَسَّسًا عَلَى الصَّخْرِ</div>
     </div>
   </div>
 
-  <div class="wrap">
-    
-    <!-- زرار التنقل بين التسجيل وإنشاء الحساب -->
-    <div class="tabs-row">
-      <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
-      <button class="tab-btn" onclick="switchTab('register')">حساب جديد</button>
+  <div class="tablet" style="padding:30px 26px;">
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="login">تسجيل الدخول</div>
+      <div class="tab" data-tab="signup">حساب جديد</div>
     </div>
 
-    <!-- كارت النماذج -->
-    <div class="auth-card">
-      
-      <!-- نموذج تسجيل الدخول -->
-      <form id="loginForm" class="form-panel active">
-        <div class="field">
-          <label for="loginPhone">رقم التليفون</label>
-          <input type="tel" id="loginPhone" placeholder="01xxxxxxxxx" required>
-        </div>
-        <div class="field">
-          <label for="loginPassword">كلمة السر</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="submit-btn">دخول المنصة</button>
-      </form>
+    <div id="msgBox"></div>
 
-      <!-- نموذج حساب جديد -->
-      <form id="registerForm" class="form-panel">
-        <div class="field">
-          <label for="regName">الاسم بالكامل</label>
-          <input type="text" id="regName" placeholder="اكتب اسمك هنا" required>
-        </div>
-        <div class="field">
-          <label for="regPhone">رقم التليفون</label>
-          <input type="tel" id="regPhone" placeholder="01xxxxxxxxx" required>
-        </div>
-        <div class="field">
-          <label for="regPassword">كلمة السر</label>
-          <input type="password" id="regPassword" placeholder="أنشئ كلمة سر" required>
-        </div>
-        <button type="submit" class="submit-btn">إنشاء حساب جديد</button>
-      </form>
+    <!-- ==== تسجيل الدخول ==== -->
+    <form id="loginForm">
+      <div class="field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button class="btn" type="submit" style="width:100%;" id="loginBtn">دخول</button>
+    </form>
 
-    </div>
-
-    <div class="footer-note">منصة رفع المحاضرات ومتابعة الواجبات · صخرة العهد</div>
+    <!-- ==== حساب جديد ==== -->
+    <form id="signupForm" class="hidden">
+      <div class="field">
+        <label>اسم الأسرة</label>
+        <input type="text" id="suName" required placeholder="مثال: أسرة مار مرقس">
+      </div>
+      <div class="field">
+        <label>رقم الموبايل</label>
+        <input type="tel" id="suPhone" required placeholder="01xxxxxxxxx">
+      </div>
+      <div class="field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="suEmail" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label>كلمة المرور</label>
+        <input type="password" id="suPassword" required minlength="6" autocomplete="new-password">
+      </div>
+      <button class="btn" type="submit" style="width:100%;" id="signupBtn">إنشاء الحساب</button>
+    </form>
 
   </div>
 
-  <script>
-    function switchTab(tab) {
-      const btns = document.querySelectorAll('.tab-btn');
-      const forms = document.querySelectorAll('.form-panel');
+  <p style="text-align:center; color:var(--cream-dim); font-size:13px; margin-top:22px;">
+    منصة رفع المحاضرات ومتابعة الواجبات
+  </p>
+</div>
 
-      btns.forEach(btn => btn.classList.remove('active'));
-      forms.forEach(form => form.classList.remove('active'));
+<script src="config.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+<script>
+  // التبديل بين تسجيل الدخول وإنشاء حساب
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      document.getElementById('loginForm').classList.toggle('hidden', target !== 'login');
+      document.getElementById('signupForm').classList.toggle('hidden', target !== 'signup');
+      document.getElementById('msgBox').innerHTML = '';
+    });
+  });
 
-      if (tab === 'login') {
-        btns[0].classList.add('active');
-        document.getElementById('loginForm').classList.add('active');
-      } else {
-        btns[1].classList.add('active');
-        document.getElementById('registerForm').classList.add('active');
-      }
+  function showMsg(text, type = 'error') {
+    document.getElementById('msgBox').innerHTML =
+      `<div class="msg msg-${type}">${text}</div>`;
+  }
+
+  // لو المستخدم مسجل دخول بالفعل، وجّهه مباشرة
+  (async () => {
+    const profile = await getCurrentProfile();
+    if (profile) {
+      window.location.href = profile.is_admin ? 'admin.html' : 'family.html';
+    }
+  })();
+
+  // تسجيل الدخول
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    const { error } = await signIn(email, password);
+
+    if (error) {
+      showMsg('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      btn.disabled = false;
+      btn.textContent = 'دخول';
+      return;
     }
 
-    // تسجيل الـ Service Worker لتطبيق الـ PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+    const profile = await getCurrentProfile();
+    window.location.href = profile?.is_admin ? 'admin.html' : 'family.html';
+  });
+
+  // إنشاء حساب جديد
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('signupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const name = document.getElementById('suName').value.trim();
+    const phone = document.getElementById('suPhone').value.trim();
+    const email = document.getElementById('suEmail').value.trim();
+    const password = document.getElementById('suPassword').value;
+
+    const { error } = await signUpFamily(email, password, name, phone);
+
+    if (error) {
+      showMsg(error.message === 'User already registered'
+        ? 'البريد الإلكتروني مسجل بالفعل، جرّب تسجيل الدخول'
+        : 'حصل خطأ: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = 'إنشاء الحساب';
+      return;
     }
-  </script>
+
+    showMsg('تم إنشاء الحساب بنجاح، جاري تحويلك...', 'success');
+    setTimeout(() => window.location.href = 'family.html', 1000);
+  });
+</script>
 </body>
 </html>
