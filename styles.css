@@ -206,4 +206,53 @@ html, body {
   color: var(--ink-soft);
   margin-top: 25px;
 }
- 
+
+/* Lecture Cards */
+.lecture-card {
+  background: var(--card);
+  border: 1px solid var(--stone-line);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.lecture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed var(--stone-line);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.lecture-title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.lecture-date {
+  font-size: 12px;
+  color: var(--stone);
+}
+
+.lecture-desc {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.logos-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.brand-logo {
+  height: 50px;
+  object-fit: contain;
+}
