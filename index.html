@@ -5,65 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>صخرة العهد</title>
   
-  <!-- PWA & Meta Tags -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-180.png">
-  <meta name="theme-color" content="#131f2c">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="صخرة العهد">
+  <meta name="theme-color" content="#F3EEE1">
 
-  <!-- Fonts & Styles -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Supabase Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <div class="header">
-    <div class="eyebrow">منصة المحاضرات</div>
-    <h1>صخرة العهد</h1>
-    <p class="sub">فَنَزَلَ الْمَطَرُ... وَلَمْ يَسْقُطْ، لأَنَّهُ كَانَ مُؤَسَّسًا عَلَى الصَّخْرِ</p>
-    <div class="divider">
-      <span></span><div class="line"></div>
-      <span></span><div class="line"></div>
-      <span></span>
-    </div>
-  </div>
-
   <div class="wrap">
 
-    <!-- تبويب التنقل -->
-    <div class="tabs-row" id="tabs">
-      <button type="button" class="tab-btn active" data-tab="login">تسجيل الدخول</button>
-      <button type="button" class="tab-btn" data-tab="signup">حساب جديد</button>
+    <div class="header">
+      <div class="eyebrow">منصة المحاضرات</div>
+      <h1>صخرة العهد</h1>
+      <p class="sub">فَنَزَلَ الْمَطَرُ... وَلَمْ يَسْقُطْ، لأَنَّهُ كَانَ مُؤَسَّسًا عَلَى الصَّخْرِ</p>
+      <div class="divider">
+        <span></span><div class="line"></div>
+        <span></span><div class="line"></div>
+        <span></span>
+      </div>
     </div>
 
-    <!-- كارت النماذج -->
+    <!-- Tabs -->
+    <div class="tabs-row">
+      <button type="button" class="tab-btn active" id="tab-login-btn" onclick="switchTab('login')">تسجيل الدخول</button>
+      <button type="button" class="tab-btn" id="tab-signup-btn" onclick="switchTab('signup')">حساب جديد</button>
+    </div>
+
+    <!-- Auth Card -->
     <div class="auth-card">
 
-      <!-- صندوق الرسائل والأخطاء -->
       <div id="msgBox"></div>
 
-      <!-- ==== نموذج تسجيل الدخول ==== -->
+      <!-- Login Form -->
       <form id="loginForm" class="form-panel active">
         <div class="field">
           <label for="loginEmail">البريد الإلكتروني</label>
-          <input type="email" id="loginEmail" required autocomplete="email" placeholder="example@domain.com">
+          <input type="email" id="loginEmail" required placeholder="example@domain.com">
         </div>
         <div class="field">
           <label for="loginPassword">كلمة المرور</label>
-          <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+          <input type="password" id="loginPassword" required placeholder="••••••••">
         </div>
         <button class="submit-btn" type="submit" id="loginBtn">دخول المنصة</button>
       </form>
 
-      <!-- ==== نموذج حساب جديد ==== -->
-      <form id="signupForm" class="form-panel hidden">
+      <!-- Signup Form -->
+      <form id="signupForm" class="form-panel">
         <div class="field">
           <label for="suName">اسم الأسرة</label>
           <input type="text" id="suName" required placeholder="مثال: أسرة مار مرقس">
@@ -74,11 +67,11 @@
         </div>
         <div class="field">
           <label for="suEmail">البريد الإلكتروني</label>
-          <input type="email" id="suEmail" required autocomplete="email" placeholder="example@domain.com">
+          <input type="email" id="suEmail" required placeholder="example@domain.com">
         </div>
         <div class="field">
           <label for="suPassword">كلمة المرور</label>
-          <input type="password" id="suPassword" required minlength="6" autocomplete="new-password" placeholder="6 أرقام أو حروف على الأقل">
+          <input type="password" id="suPassword" required minlength="6" placeholder="6 أرقام أو حروف على الأقل">
         </div>
         <button class="submit-btn" type="submit" id="signupBtn">إنشاء الحساب</button>
       </form>
@@ -89,40 +82,34 @@
 
   </div>
 
-  <!-- السكريبتات الأساسية المربوطة بـ Supabase -->
   <script src="config.js"></script>
 
   <script>
-    // تسجيل الـ Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
+    function switchTab(target) {
+      const loginBtn = document.getElementById('tab-login-btn');
+      const signupBtn = document.getElementById('tab-signup-btn');
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+
+      document.getElementById('msgBox').innerHTML = '';
+
+      if (target === 'login') {
+        loginBtn.classList.add('active');
+        signupBtn.classList.remove('active');
+        loginForm.classList.add('active');
+        signupForm.classList.remove('active');
+      } else {
+        signupBtn.classList.add('active');
+        loginBtn.classList.remove('active');
+        signupForm.classList.add('active');
+        loginForm.classList.remove('active');
+      }
     }
-
-    // التبديل بين تسجيل الدخول وإنشاء حساب
-    document.querySelectorAll('.tabs-row .tab-btn').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tabs-row .tab-btn').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const target = tab.dataset.tab;
-        
-        document.getElementById('loginForm').classList.toggle('hidden', target !== 'login');
-        document.getElementById('signupForm').classList.toggle('hidden', target !== 'signup');
-        
-        document.getElementById('loginForm').classList.toggle('active', target === 'login');
-        document.getElementById('signupForm').classList.toggle('active', target === 'signup');
-
-        document.getElementById('msgBox').innerHTML = '';
-      });
-    });
 
     function showMsg(text, type = 'error') {
-      document.getElementById('msgBox').innerHTML =
-        `<div class="msg msg-${type}">${text}</div>`;
+      document.getElementById('msgBox').innerHTML = `<div class="msg msg-${type}">${text}</div>`;
     }
 
-    // لو المستخدم مسجل دخول بالفعل، وجّهه مباشرة
     (async () => {
       const profile = await getCurrentProfile();
       if (profile) {
@@ -130,7 +117,6 @@
       }
     })();
 
-    // عملية تسجيل الدخول عبر Supabase
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
@@ -153,7 +139,6 @@
       window.location.href = profile?.is_admin ? 'admin.html' : 'family.html';
     });
 
-    // عملية إنشاء حساب جديد عبر Supabase
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('signupBtn');
